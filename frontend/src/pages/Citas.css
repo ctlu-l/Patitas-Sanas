@@ -1,0 +1,206 @@
+/* MisCitas.css */
+.mis-citas-wrapper {
+  min-height: 100vh;
+  background: #f0f4ff;
+  padding: 40px 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.citas-container {
+  max-width: 750px;
+  margin: 0 auto;
+}
+
+.citas-back-link {
+  color: #012b81;
+  text-decoration: none;
+  font-weight: bold;
+  display: inline-block;
+  margin-bottom: 24px;
+}
+
+.citas-back-link:hover { text-decoration: underline; }
+
+.citas-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.citas-header h1 {
+  color: #012b81;
+  font-size: 2rem;
+  margin-bottom: 6px;
+}
+
+.citas-header p {
+  color: #666;
+  font-size: 1rem;
+}
+
+/* Loading */
+.citas-loading {
+  text-align: center;
+  margin-top: 80px;
+  font-size: 1.2rem;
+  color: #012b81;
+}
+
+/* Error */
+.citas-error {
+  background: #ffe0e0;
+  color: #c0392b;
+  padding: 14px 20px;
+  border-radius: 10px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Empty */
+.citas-empty {
+  background: white;
+  border-radius: 16px;
+  padding: 50px 30px;
+  text-align: center;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+}
+
+.empty-icon { font-size: 3rem; display: block; margin-bottom: 12px; }
+
+.citas-empty p {
+  color: #555;
+  font-size: 1.1rem;
+  margin-bottom: 20px;
+}
+
+/* Lista de citas */
+.citas-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cita-card {
+  background: white;
+  border-radius: 14px;
+  padding: 20px 24px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+  border-left: 5px solid #27ae60;
+  position: relative;
+  transition: transform 0.2s ease;
+}
+
+.cita-card:hover { transform: translateY(-3px); }
+
+.cita-card.pasada {
+  border-left-color: #bbb;
+  opacity: 0.85;
+}
+
+.cita-status-badge {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #27ae60;
+  background: #eafaf1;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.cita-card.pasada .cita-status-badge {
+  color: #888;
+  background: #f0f0f0;
+}
+
+.cita-info {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cita-mascota {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cita-especie-icon { font-size: 2.2rem; }
+
+.cita-mascota h3 {
+  margin: 0;
+  color: #012b81;
+  font-size: 1.2rem;
+}
+
+.cita-especie {
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.cita-detalles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+}
+
+.cita-detalle-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.detalle-label {
+  font-size: 0.75rem;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detalle-valor {
+  font-size: 0.95rem;
+  color: #333;
+  font-weight: 600;
+}
+
+/* Botón agendar */
+.btn-agendar {
+  background-color: #27ae60;
+  color: white;
+  padding: 12px 28px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1rem;
+  margin-top: 28px;
+  transition: background 0.2s ease;
+}
+
+.btn-agendar:hover { background-color: #219a52; }
+
+.citas-footer-btn { text-align: center; }
+
+/* Botón borrar */
+.btn-borrar {
+  background: none;
+  border: 1px solid #e74c3c;
+  color: #e74c3c;
+  padding: 7px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-top: 12px;
+  transition: all 0.2s ease;
+}
+
+.btn-borrar:hover {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.btn-borrar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
