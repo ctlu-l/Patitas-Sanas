@@ -44,24 +44,47 @@ function AgendarCita() {
     setGuardando(true);
 
     try {
-      const { data: clienteInsertado, error: errorCliente } = await supabase
-        .from('clientes')
-        .insert([{ 
-          nombre_completo: nombreDueño, 
-          telefono: telefono, 
-          direccion: direccion 
-        }])
-        .select()
-        .single();
+      // Obtener correo del usuario logueado
+      const { data: { session } } = await supabase.auth.getSession();
+      const correoUsuario = session?.user?.email || null;
 
-      if (errorCliente) throw errorCliente;
+      // Buscar si ya existe cliente con ese correo
+      let idCliente = null;
+      if (correoUsuario) {
+        const { data: clienteExistente } = await supabase
+          .from('clientes')
+          .select('id_cliente')
+          .eq('correo', correoUsuario)
+          .maybeSingle();
+
+        if (clienteExistente) {
+          idCliente = clienteExistente.id_cliente;
+        }
+      }
+
+      // Si no existe, crear cliente nuevo CON correo
+      if (!idCliente) {
+        const { data: clienteInsertado, error: errorCliente } = await supabase
+          .from('clientes')
+          .insert([{ 
+            nombre_completo: nombreDueño, 
+            telefono: telefono, 
+            direccion: direccion,
+            correo: correoUsuario // 👈 guarda el correo
+          }])
+          .select()
+          .single();
+
+        if (errorCliente) throw errorCliente;
+        idCliente = clienteInsertado.id_cliente;
+      }
 
       const { data: mascotaInsertada, error: errorMascota } = await supabase
         .from('mascotas')
         .insert([{ 
           nombre: nombreMascota, 
           especie: especie, 
-          id_cliente: clienteInsertado.id_cliente 
+          id_cliente: idCliente 
         }])
         .select()
         .single();
@@ -89,7 +112,7 @@ function AgendarCita() {
       if (errorCita) throw errorCita;
 
       alert(`¡Cita Agendada!\n\nPaciente: ${nombreMascota}\nFecha: ${diaSeleccionado} de ${meses[mesActual]} a las ${horaSeleccionada}`);
-      navigate('/portal-cliente'); 
+      navigate('/mis-citas'); // 👈 redirige a Mis Citas
 
     } catch (err) {
       alert('Hubo un error al guardar la reservación.');
