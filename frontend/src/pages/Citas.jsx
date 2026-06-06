@@ -1,230 +1,205 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { supabase } from '../supabase'; // <-- Importamos la conexión a la nube
-import './AgendarCita.css';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { supabase } from '../supabase';
+import './Citas.css';
 
-function AgendarCita() {
+function Citas() {
   const navigate = useNavigate();
-  
-  // 1. Obtenemos la fecha real para construir el registro
-  const fechaActual = new Date();
-  const mesActual = fechaActual.getMonth(); 
-  const anioActual = fechaActual.getFullYear();
-  const hoy = fechaActual.getDate();
-  
-  const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+  const [citas, setCitas] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState(null);
+  const [borrando, setBorrando] = useState(null);
 
-  // Estados de selección
-  const [diaSeleccionado, setDiaSeleccionado] = useState(hoy);
-  const [horaSeleccionada, setHoraSeleccionada] = useState('06:00 PM');
-  
-  // Estados del formulario
-  const [nombreDueño, setNombreDueño] = useState('');
-  const [telefono, setTelefono] = useState('');
-  const [direccion, setDirección] = useState('');
-  const [nombreMascota, setNombreMascota] = useState('');
-  const [especie, setEspecie] = useState('');
-  const [servicio, setServicio] = useState('Consulta General');
-  
-  // Estado para controlar la carga visual del botón
-  const [guardando, setGuardando] = useState(false);
+  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
-  // FUNCIÓN PRINCIPAL PARA GUARDAR EN SUPABASE
-  const guardarRegistroCita = async (e) => {
-    e.preventDefault();
-    setGuardando(true);
+  useEffect(() => {
+    cargarCitas();
+  }, []);
 
+  const cargarCitas = async () => {
     try {
-      // PASO 1: Insertar el cliente en la tabla 'clientes'
-      const { data: clienteInsertado, error: errorCliente } = await supabase
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return navigate('/login');
+
+      const correo = session.user.email;
+
+      // Buscar clientes con ese correo
+      const { data: clientes, error: errorClientes } = await supabase
         .from('clientes')
-        .insert([{ 
-          nombre_completo: nombreDueño, 
-          telefono: telefono, 
-          direccion: direccion 
-        }])
-        .select()
-        .single(); // Nos regresa el registro creado para obtener su ID
+        .select('id_cliente')
+        .eq('correo', correo);
 
-      if (errorCliente) throw errorCliente;
+      if (errorClientes) throw errorClientes;
+      if (!clientes || clientes.length === 0) {
+        setCitas([]);
+        setCargando(false);
+        return;
+      }
 
-      // PASO 2: Insertar la mascota vinculada a ese cliente
-      const { data: mascotaInsertada, error: errorMascota } = await supabase
+      const idsClientes = clientes.map(c => c.id_cliente);
+
+      // Buscar mascotas de esos clientes
+      const { data: mascotas, error: errorMascotas } = await supabase
         .from('mascotas')
-        .insert([{ 
-          nombre: nombreMascota, 
-          especie: especie, 
-          id_cliente: clienteInsertado.id_cliente 
-        }])
-        .select()
-        .single();
+        .select('id_mascota, nombre, especie')
+        .in('id_cliente', idsClientes);
 
-      if (errorMascota) throw errorMascota;
+      if (errorMascotas) throw errorMascotas;
+      if (!mascotas || mascotas.length === 0) {
+        setCitas([]);
+        setCargando(false);
+        return;
+      }
 
-      // Convertir la hora seleccionada (Ej: "04:00 PM") a formato de 24h para PostgreSQL
-      let [time, modifier] = horaSeleccionada.split(' ');
-      let [hours, minutes] = time.split(':');
-      if (hours === '12') hours = '00';
-      if (modifier === 'PM') hours = parseInt(hours, 10) + 12;
-      
-      // Construir el timestamp completo (Año-Mes-Día Hora:Minutos:00)
-      const mesFormateado = String(mesActual + 1).padStart(2, '0');
-      const diaFormateado = String(diaSeleccionado).padStart(2, '0');
-      const timestampCita = `${anioActual}-${mesFormateado}-${diaFormateado} ${hours}:${minutes}:00`;
+      const idsMascotas = mascotas.map(m => m.id_mascota);
 
-      // PASO 3: Insertar la cita vinculada a la mascota
-      const { error: errorCita } = await supabase
+      // Buscar citas de esas mascotas
+      const { data: citasData, error: errorCitas } = await supabase
         .from('citas')
-        .insert([{
-          fecha_hora: timestampCita,
-          motivo: servicio,
-          id_mascota: mascotaInsertada.id_mascota,
-          id_veterinario: 1 // Por defecto asignamos al primer médico disponible
-        }]);
+        .select('*')
+        .in('id_mascota', idsMascotas)
+        .order('fecha_hora', { ascending: true });
 
-      if (errorCita) throw errorCita;
+      if (errorCitas) throw errorCitas;
 
-      // ÉXITO TOTAL
-      alert(`¡Cita Agendada y Guardada en la Nube!\n\nPaciente: ${nombreMascota}\nFecha: ${diaSeleccionado} de ${meses[mesActual]} a las ${horaSeleccionada}`);
-      navigate('/recepcion'); // Redireccionamos directo a recepción para verla reflejada
+      const citasConMascota = (citasData || []).map(cita => {
+        const mascota = mascotas.find(m => m.id_mascota === cita.id_mascota);
+        return { ...cita, mascota };
+      });
 
+      setCitas(citasConMascota);
     } catch (err) {
-      alert('Hubo un error al guardar la reservación.');
-      console.error('Detalle del error:', err.message);
+      console.error('Error cargando citas:', err.message);
+      setError('No se pudieron cargar tus citas. Intenta de nuevo.');
     } finally {
-      setGuardando(false);
+      setCargando(false);
     }
   };
 
-  const renderDias = () => {
-    const dias = [];
-    const primerDiaDelMes = new Date(anioActual, mesActual, 1).getDay();
-    const espaciosVacios = primerDiaDelMes === 0 ? 6 : primerDiaDelMes - 1;
-    const diasTotalesDelMes = new Date(anioActual, mesActual + 1, 0).getDate();
+  const borrarCita = async (idCita) => {
+    const confirmar = window.confirm('¿Seguro que quieres cancelar esta cita?');
+    if (!confirmar) return;
 
-    for (let i = 0; i < espaciosVacios; i++) {
-      dias.push(<div key={`empty-${i}`} className="day empty"></div>);
+    setBorrando(idCita);
+    try {
+      const { error } = await supabase
+        .from('citas')
+        .delete()
+        .eq('id_cita', idCita);
+
+      if (error) throw error;
+
+      setCitas(prev => prev.filter(c => (c.id_cita || c.id) !== idCita));
+    } catch (err) {
+      console.error('Error borrando cita:', err.message);
+      alert('No se pudo cancelar la cita. Intenta de nuevo.');
+    } finally {
+      setBorrando(null);
     }
-    
-    for (let i = 1; i <= diasTotalesDelMes; i++) {
-      const fechaIteracion = new Date(anioActual, mesActual, i);
-      const diaSemana = fechaIteracion.getDay();
-      const esFinDeSemana = diaSemana === 0 || diaSemana === 6;
-      const esPasado = i < hoy; 
-      
-      const isDisabled = esFinDeSemana || esPasado;
-      const isSelected = diaSeleccionado === i;
-      
-      dias.push(
-        <div 
-          key={i} 
-          className={`day ${isDisabled ? 'disabled' : ''} ${isSelected ? 'selected' : ''}`}
-          onClick={() => !isDisabled && setDiaSeleccionado(i)}
-        >
-          {i}
-        </div>
-      );
-    }
-    return dias;
   };
 
-  const horarios = ['11:00 AM', '12:00 PM', '01:00 PM', '03:00 PM', '04:00 PM', '05:00 PM', '06:00 PM'];
+  const formatearFecha = (fechaISO) => {
+    const fecha = new Date(fechaISO);
+    const dia = fecha.getDate();
+    const mes = meses[fecha.getMonth()];
+    const anio = fecha.getFullYear();
+    let horas = fecha.getHours();
+    const minutos = String(fecha.getMinutes()).padStart(2, '0');
+    const ampm = horas >= 12 ? 'PM' : 'AM';
+    horas = horas % 12 || 12;
+    return { fecha: `${dia} de ${mes}, ${anio}`, hora: `${horas}:${minutos} ${ampm}` };
+  };
+
+  const esFutura = (fechaISO) => new Date(fechaISO) >= new Date();
+
+  if (cargando) return (
+    <div className="citas-wrapper">
+      <div className="citas-loading">Cargando tus citas... 🐾</div>
+    </div>
+  );
 
   return (
-    <div className="agendar-wrapper">
-      <div className="container">
-        <Link to="/" style={{ color: '#012b81', textDecoration: 'none', fontWeight: 'bold', marginBottom: '20px', display: 'inline-block' }}>
-          ← Volver al inicio
+    <div className="citas-wrapper">
+      <div className="citas-container">
+        <Link to="/portal-cliente" className="citas-back-link">
+          ← Volver al Portal
         </Link>
-        
-        <div className="appointment-card">
-          <div className="header-citas">
-            <h1>Agenda tu Consulta Especializada</h1>
-            <p>Selecciona una fecha y horario para la atención de tu mascota.</p>
-          </div>
 
-          <div className="booking-grid">
-            <div className="calendar-box">
-              <h3>1. Selecciona el día ({meses[mesActual]} {anioActual})</h3>
-              <div className="calendar">
-                <div className="cal-header">
-                  <span>&lt;</span>
-                  <span>{meses[mesActual]} {anioActual}</span>
-                  <span>&gt;</span>
-                </div>
-                <div className="cal-grid">
-                  <div className="day-name">LU</div><div className="day-name">MA</div><div className="day-name">MI</div>
-                  <div className="day-name">JU</div><div className="day-name">VI</div><div className="day-name">SA</div>
-                  <div className="day-name">DO</div>
-                  {renderDias()}
-                </div>
-              </div>
-            </div>
-
-            <div className="time-box">
-              <h3>2. Horarios Disponibles</h3>
-              <div className="time-slots">
-                {horarios.map(hora => (
-                  <div 
-                    key={hora}
-                    className={`slot ${horaSeleccionada === hora ? 'selected' : ''}`}
-                    onClick={() => setHoraSeleccionada(hora)}
-                  >
-                    {hora}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="form-section">
-            <h3>3. Información de Registro</h3>
-            <form className="form-grid" onSubmit={guardarRegistroCita}>
-              <div className="input-group">
-                <label>Nombre del Dueño</label>
-                <input type="text" placeholder="Ej. Juan Pérez" value={nombreDueño} onChange={e => setNombreDueño(e.target.value)} required />
-              </div>
-              <div className="input-group">
-                <label>Teléfono de Contacto</label>
-                <input type="tel" placeholder="55 0000 0000" value={telefono} onChange={e => setTelefono(e.target.value)} required />
-              </div>
-              <div className="input-group">
-                <label>Dirección</label>
-                <input type="text" placeholder="Calle, Número, Colonia" value={direccion} onChange={e => setDirección(e.target.value)} required />
-              </div>
-              <div className="input-group">
-                <label>Nombre de la Mascota</label>
-                <input type="text" placeholder="Ej. Toby" value={nombreMascota} onChange={e => setNombreMascota(e.target.value)} required />
-              </div>
-              <div className="input-group">
-                <label>Especie de la Mascota</label>
-                <select value={especie} onChange={e => setEspecie(e.target.value)} required>
-                  <option value="" disabled>Selecciona una opción...</option>
-                  <option value="Perro">Perro (Canino)</option>
-                  <option value="Gato">Gato (Felino)</option>
-                  <option value="Ave">Ave</option>
-                  <option value="Roedor">Roedor</option>
-                </select>
-              </div>
-              <div className="input-group">
-                <label>Tipo de Servicio</label>
-                <select value={servicio} onChange={e => setServicio(e.target.value)}>
-                  <option value="Consulta General">Consulta General</option>
-                  <option value="Oncología">Oncología (Dr. Celis)</option>
-                  <option value="Cirugía / Ortopedia">Cirugía / Ortopedia</option>
-                  <option value="Medicina Interna">Medicina Interna</option>
-                </select>
-              </div>
-              
-              <button type="submit" className="btn-confirm" disabled={guardando}>
-                {guardando ? 'Guardando en la Nube...' : 'Confirmar Reservación'}
-              </button>
-            </form>
-          </div>
+        <div className="citas-header">
+          <h1>📅 Mis Citas</h1>
+          <p>Historial y próximas visitas al veterinario</p>
         </div>
+
+        {error && <div className="citas-error">{error}</div>}
+
+        {!error && citas.length === 0 && (
+          <div className="citas-empty">
+            <span className="empty-icon">🐶</span>
+            <p>Aún no tienes citas agendadas.</p>
+            <Link to="/agendar-cita">
+              <button className="btn-agendar">+ Agendar una Cita</button>
+            </Link>
+          </div>
+        )}
+
+        {citas.length > 0 && (
+          <>
+            <div className="citas-list">
+              {citas.map((cita, index) => {
+                const { fecha, hora } = formatearFecha(cita.fecha_hora);
+                const futura = esFutura(cita.fecha_hora);
+                const idCita = cita.id_cita || cita.id;
+                return (
+                  <div key={index} className={`cita-card ${futura ? 'futura' : 'pasada'}`}>
+                    <div className="cita-status-badge">
+                      {futura ? '✅ Próxima' : '✔ Realizada'}
+                    </div>
+                    <div className="cita-info">
+                      <div className="cita-mascota">
+                        <span className="cita-especie-icon">
+                          {cita.mascota?.especie === 'Gato' ? '🐱' : cita.mascota?.especie === 'Ave' ? '🐦' : cita.mascota?.especie === 'Roedor' ? '🐹' : '🐶'}
+                        </span>
+                        <div>
+                          <h3>{cita.mascota?.nombre || 'Mascota'}</h3>
+                          <span className="cita-especie">{cita.mascota?.especie}</span>
+                        </div>
+                      </div>
+                      <div className="cita-detalles">
+                        <div className="cita-detalle-item">
+                          <span className="detalle-label">📋 Servicio</span>
+                          <span className="detalle-valor">{cita.motivo}</span>
+                        </div>
+                        <div className="cita-detalle-item">
+                          <span className="detalle-label">📆 Fecha</span>
+                          <span className="detalle-valor">{fecha}</span>
+                        </div>
+                        <div className="cita-detalle-item">
+                          <span className="detalle-label">🕐 Hora</span>
+                          <span className="detalle-valor">{hora}</span>
+                        </div>
+                      </div>
+                      <button
+                        className="btn-borrar"
+                        onClick={() => borrarCita(idCita)}
+                        disabled={borrando === idCita}
+                      >
+                        {borrando === idCita ? 'Cancelando...' : '🗑 Cancelar Cita'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="citas-footer-btn">
+              <Link to="/agendar-cita">
+                <button className="btn-agendar">+ Agendar Nueva Cita</button>
+              </Link>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
 }
 
-export default AgendarCita;
+export default Citas;
