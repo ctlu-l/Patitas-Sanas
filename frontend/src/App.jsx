@@ -20,11 +20,11 @@ function App() {
         <Route path="/" element={<Inicio />} />
         <Route path="/portal-cliente" element={<PortalCliente />} />
         <Route path="/mis-citas" element={<MisCitas />} />
+        <Route path="/mis-mascotas" element={<Mascotas />} />
         <Route path="/login" element={<Login />} />
         <Route path="/agendar-cita" element={<AgendarCita />} />
         <Route path="/panel-vet" element={<Medico />} />
         <Route path="/admin" element={<Admin />} />
-        <Route path="/mascotas" element={<Mascotas />} />
 
         <Route path="/*" element={
           <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'Arial, sans-serif' }}>
@@ -38,7 +38,7 @@ function App() {
                   <Link to="/clientes" style={{ color: 'white', textDecoration: 'none', fontSize: '18px', display: 'block', padding: '10px', backgroundColor: '#333', borderRadius: '5px' }}>👥 Dueños</Link>
                 </li>
                 <li style={{ margin: '20px 0' }}>
-                  <Link to="/mascotas" style={{ color: 'white', textDecoration: 'none', fontSize: '18px', display: 'block', padding: '10px', backgroundColor: '#333', borderRadius: '5px' }}>🐕 Mascotas</Link>
+                  <Link to="/mis-mascotas" style={{ color: 'white', textDecoration: 'none', fontSize: '18px', display: 'block', padding: '10px', backgroundColor: '#333', borderRadius: '5px' }}>🐕 Mascotas</Link>
                 </li>
                 <li style={{ margin: '20px 0' }}>
                   <Link to="/citas" style={{ color: 'white', textDecoration: 'none', fontSize: '18px', display: 'block', padding: '10px', backgroundColor: '#333', borderRadius: '5px' }}>📅 Agenda</Link>
