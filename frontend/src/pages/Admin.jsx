@@ -5,11 +5,17 @@ import './DashRec.css';
 
 export const Admin = () => {
   const navigate = useNavigate();
-  const [seccionActiva, setSeccionActiva] = useState('personal');
+  const [seccionActiva, setSeccionActiva] = useState('pacientes'); // Iniciamos en pacientes para probar
   
+  // Estados para Personal
   const [veterinarios, setVeterinarios] = useState([]);
   const [recepcionistas, setRecepcionistas] = useState([]);
   const [cargandoPersonal, setCargandoPersonal] = useState(false);
+
+  // Estados para Pacientes
+  const [pacientes, setPacientes] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [cargandoPacientes, setCargandoPacientes] = useState(false);
 
   // Estados para el Modal
   const [modalActivo, setModalActivo] = useState(null);
@@ -27,11 +33,12 @@ export const Admin = () => {
   };
 
   useEffect(() => {
-    if (seccionActiva === 'personal') {
-      fetchPersonal();
-    }
+    // Si cambiamos de sección, cargamos lo necesario
+    if (seccionActiva === 'personal') fetchPersonal();
+    if (seccionActiva === 'pacientes') fetchPacientes();
   }, [seccionActiva]);
 
+  // --- FUNCIONES DE PERSONAL ---
   const fetchPersonal = async () => {
     setCargandoPersonal(true);
     try {
@@ -52,7 +59,6 @@ export const Admin = () => {
     }
   };
 
-  // Función para borrar (Dar de baja)
   const handleDarDeBaja = async (id, tipo) => {
     const confirmacion = window.confirm("¿Estás seguro de que deseas dar de baja a este empleado? Esta acción no se puede deshacer.");
     if (!confirmacion) return;
@@ -109,6 +115,24 @@ export const Admin = () => {
     }
   };
 
+  // --- FUNCIONES DE PACIENTES ---
+  const fetchPacientes = async () => {
+    setCargandoPacientes(true);
+    const { data, error } = await supabase
+      .from('mascotas')
+      .select('*, clientes(nombre_completo, telefono, correo)'); // Join con clientes
+    
+    if (!error) setPacientes(data || []);
+    setCargandoPacientes(false);
+  };
+
+  // Filtro de búsqueda en tiempo real
+  const pacientesFiltrados = pacientes.filter(p => 
+    p.nombre.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    p.clientes?.nombre_completo?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // --- RENDERIZADO CONDICIONAL DE SECCIONES ---
   const renderContenido = () => {
     switch (seccionActiva) {
       case 'dashboard':
@@ -206,9 +230,46 @@ export const Admin = () => {
         );
 
       case 'pacientes':
-        return <div className="panel"><h2 style={{ color: 'var(--primary)' }}>Directorio General de Pacientes</h2></div>;
+        return (
+          <div className="panel">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ color: 'var(--primary)', margin: 0 }}>Directorio de Pacientes</h2>
+              <input 
+                type="text" 
+                placeholder="🔍 Buscar por nombre de mascota o dueño..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ padding: '10px', width: '300px', borderRadius: '5px', border: '1px solid #ccc' }}
+              />
+            </div>
+            {cargandoPacientes ? <p>Cargando pacientes...</p> : (
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#f4f6f9' }}>
+                    <th style={{ padding: '12px', textAlign: 'left' }}>Mascota</th>
+                    <th style={{ padding: '12px', textAlign: 'left' }}>Especie</th>
+                    <th style={{ padding: '12px', textAlign: 'left' }}>Dueño</th>
+                    <th style={{ padding: '12px', textAlign: 'left' }}>Contacto</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pacientesFiltrados.map(p => (
+                    <tr key={p.id_mascota} style={{ borderBottom: '1px solid #eee' }}>
+                      <td style={{ padding: '12px', fontWeight: 'bold' }}>{p.nombre}</td>
+                      <td style={{ padding: '12px' }}>{p.especie}</td>
+                      <td style={{ padding: '12px' }}>{p.clientes?.nombre_completo || 'Sin dueño'}</td>
+                      <td style={{ padding: '12px', fontSize: '0.9rem' }}>{p.clientes?.telefono || 'N/A'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        );
+
       case 'servicios':
         return <div className="panel"><h2 style={{ color: 'var(--primary)' }}>Catálogo de Servicios y Precios</h2></div>;
+      
       default:
         return null;
     }
@@ -238,6 +299,7 @@ export const Admin = () => {
         {renderContenido()}
       </main>
 
+      {/* --- MODAL PARA REGISTRO DE PERSONAL --- */}
       {modalActivo && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
           <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '10px', width: '400px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
