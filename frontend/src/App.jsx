@@ -11,6 +11,7 @@ import PortalCliente from './pages/PortalCliente';
 import { DashVet } from './pages/DashVet';
 import { DashRec } from './pages/DashRec';
 import MisCitas from './pages/Citas';
+import { Inventario } from './pages/Inventario'; 
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
         <Route path="/agendar-cita" element={<AgendarCita />} />
         <Route path="/panel-vet" element={<Medico />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/inventario" element={<Inventario />} />
 
         <Route path="/*" element={
           <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'Arial, sans-serif' }}>

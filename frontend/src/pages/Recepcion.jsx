@@ -10,11 +10,32 @@ export const Recepcion = () => {
   const [agenda, setAgenda] = useState([]);
   const [ingresosTotales, setIngresosTotales] = useState(0);
   const [citasAtendidas, setCitasAtendidas] = useState(0);
+  const [alertasStock, setAlertasStock] = useState(0); // NUEVO: Estado dinámico para el stock
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
     fetchCitasPorFecha(fechaSeleccionada);
+    fetchAlertasStock(); // NUEVO: Llamada automática al cargar la vista
   }, [fechaSeleccionada]);
+
+  // NUEVO: Función para traer y contar las alertas de stock reales
+  const fetchAlertasStock = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('inventario')
+        .select('cantidad, stock_minimo');
+
+      if (error) throw error;
+
+      if (data) {
+        // Filtramos y contamos cuántos productos están por debajo o igual al mínimo
+        const productosConAlerta = data.filter(prod => prod.cantidad <= prod.stock_minimo);
+        setAlertasStock(productosConAlerta.length);
+      }
+    } catch (error) {
+      console.error('Error al calcular las alertas de stock:', error.message);
+    }
+  };
 
   const fetchCitasPorFecha = async (fecha) => {
     setCargando(true);
@@ -38,7 +59,7 @@ export const Recepcion = () => {
             time: horaFormateada,
             isAvailable: false, 
             isPaid: cita.estado === 'Completada', 
-            isCancelled: cita.estado === 'Cancelada', // NUEVO: Identificamos si está cancelada
+            isCancelled: cita.estado === 'Cancelada', 
             name: cita.mascotas?.nombre || 'Mascota',
             type: cita.motivo,
             details: `${cita.veterinarios?.nombre_completo || 'Asignado'} | Status: ${cita.estado}`,
@@ -79,20 +100,31 @@ export const Recepcion = () => {
         }
         montoACobrar = Number(inputMonto);
       }
-      const { error } = await supabase
+      
+      const { error: errorCita } = await supabase
         .from('citas')
         .update({ estado: 'Completada', monto: montoACobrar })
         .eq('id_cita', id_cita); 
 
-      if (error) throw error;
-      alert(`Pago de $${montoACobrar} registrado exitosamente en caja.`);
+      if (errorCita) throw errorCita;
+
+      const { error: errorPago } = await supabase
+        .from('pagos')
+        .insert([{
+          id_cita: id_cita,
+          monto: montoACobrar,
+          metodo_pago: 'Efectivo'
+        }]);
+
+      if (errorPago) throw errorPago;
+
+      alert(`Pago de $${montoACobrar} registrado exitosamente en la base de datos.`);
       fetchCitasPorFecha(fechaSeleccionada); 
     } catch (error) {
-      alert(`Error al registrar el cobro: ${error.message}`);
+      alert(`Error al registrar el cobro en base de datos: ${error.message}`);
     }
   };
 
-  // NUEVO: Función para cancelar la cita
   const handleCancelar = async (id_cita) => {
     const confirmar = window.confirm("¿Estás seguro de que deseas cancelar esta cita?");
     if (!confirmar) return;
@@ -100,13 +132,13 @@ export const Recepcion = () => {
     try {
       const { error } = await supabase
         .from('citas')
-        .update({ estado: 'Cancelada' }) // Asume que 'Cancelada' es un estado válido en tu BD
+        .update({ estado: 'Cancelada' }) 
         .eq('id_cita', id_cita);
 
       if (error) throw error;
       
       alert("Cita cancelada exitosamente.");
-      fetchCitasPorFecha(fechaSeleccionada); // Refrescamos la lista
+      fetchCitasPorFecha(fechaSeleccionada); 
     } catch (error) {
       alert(`Error al cancelar la cita: ${error.message}`);
     }
@@ -138,7 +170,17 @@ export const Recepcion = () => {
               ➕ Nueva Cita
             </a>
           </li>
-          <li><a href="#">📦 Inventario</a></li>
+          <li>
+            <a 
+              href="#" 
+              onClick={(e) => {
+                e.preventDefault();
+                navigate('/inventario');
+              }}
+            >
+              📦 Inventario
+            </a>
+          </li>
         </ul>
       </aside>
 
@@ -164,17 +206,19 @@ export const Recepcion = () => {
             <h4>CITAS AGENDADAS</h4>
             <div className="value">{agenda.length}</div>
           </div>
-          <div className="stat-card red">
+          
+          {/* MODIFICADO: Ahora el valor de las alertas es 100% dinámico */}
+          <div className="stat-card red" style={{ cursor: 'pointer' }} onClick={() => navigate('/inventario')}>
             <h4>ALERTAS DE STOCK</h4>
-            <div className="value">3</div>
+            <div className="value">{alertasStock}</div>
           </div>
         </div>
 
-        <div className="panels-grid">
+        <div className="panels-grid" style={{ gridTemplateColumns: '1fr' }}>
           <div className="panel">
             <div className="panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                <h2 style={{ margin: 0 }}>Gestión de Citas</h2>
+                <h2>Gestión de Citas</h2>
                 <input 
                   type="date" 
                   value={fechaSeleccionada}
@@ -208,7 +252,6 @@ export const Recepcion = () => {
                       <p>{cita.details}</p>
                     </div>
 
-                    {/* NUEVO: Lógica condicional para los botones */}
                     <div style={{ display: 'flex', gap: '10px' }}>
                       {cita.isCancelled ? (
                         <button className="btn-action" disabled style={{ backgroundColor: '#e0e0e0', color: '#666', border: '1px solid #ccc', cursor: 'not-allowed' }}>
@@ -242,41 +285,6 @@ export const Recepcion = () => {
                 ))
               )}
             </div>
-          </div>
-
-          <div className="panel">
-            <h2>Faltantes y Material</h2>
-            
-            <h3>Medicamentos</h3>
-            <div className="alert-item">
-              <span>Vacuna Múltiple</span>
-              <span className="stock-low">2 Dosis restantes</span>
-            </div>
-            <div className="alert-item">
-              <span>Desparasitante</span>
-              <span className="stock-ok">5 Tabletas</span>
-            </div>
-            <div className="alert-item">
-              <span>Meloxicam</span>
-              <span className="stock-low">Agotado</span>
-            </div>
-
-            <h3 style={{ marginTop: '25px' }}>Material de Curación</h3>
-            <div className="alert-item">
-              <span>Jeringas 3ml</span>
-              <span className="stock-low">10 pzas</span>
-            </div>
-            <div className="alert-item">
-              <span>Gasas Estériles</span>
-              <span className="stock-ok">1 Paquete</span>
-            </div>
-            
-            <button 
-              style={{ width: '100%', marginTop: '25px', background: 'var(--primary)', color: 'white', border: 'none', padding: '10px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }} 
-              onClick={() => window.alert('Esta función se conectará a la base de datos de inventario pronto.')}
-            >
-              Generar Pedido de Surtido
-            </button>
           </div>
         </div>
 
