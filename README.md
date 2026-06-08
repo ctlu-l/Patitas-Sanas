@@ -267,7 +267,6 @@ La interfaz web fue construida con un enfoque en la usabilidad y la presentació
 
 
 ## Imagenes del Proyecto
-<details>
 | Pantalla de Inicio |
 |---|
 | <img loading="lazy" src="./fotos/inicio.png" width="800"/> |
@@ -306,7 +305,7 @@ La interfaz web fue construida con un enfoque en la usabilidad y la presentació
 | Veterinario |
 |---|
 | <img loading="lazy" src="./fotos/vet.png" width="800"/> |
----
+
 
 🔗 Enlaces
 
