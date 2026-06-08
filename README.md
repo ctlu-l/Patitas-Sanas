@@ -265,6 +265,8 @@ La interfaz web fue construida con un enfoque en la usabilidad y la presentació
 - **GitHub Pages**: Hospedaje del sitio estático del frontend.
 - **Vercel**: Plataforma de despliegue continuo integrada con el repositorio, utilizada para previsualización y producción.
 
+
+
 <details>
 <summary>🖼️ Ver Imagenes del Proyecto</summary>
 
