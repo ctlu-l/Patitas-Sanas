@@ -61,7 +61,7 @@ manejo de personal e informacion sobre los servicios proporcionados.
 </details>
 
 ### 📂estructura general:
-```
+
   frontend/
 ├── .gitignore
 ├── README.md
