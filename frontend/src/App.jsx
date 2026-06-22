@@ -10,7 +10,6 @@ import AgendarCita from './pages/AgendarCita';
 import PortalCliente from './pages/PortalCliente';
 import { MisCompras } from './pages/MisCompras';
 import { DashVet } from './pages/DashVet';
-import { DashRec } from './pages/DashRec';
 import MisCitas from './pages/Citas';
 import { Inventario } from './pages/Inventario'; 
 import { CartProvider } from './tienda/CartContext';
@@ -46,7 +45,6 @@ function App() {
           } />
 
           <Route path="/demo-veterinario" element={<DashVet />} />
-          <Route path="/demo-recepcionista" element={<DashRec />} />
         </Routes>
       </BrowserRouter>
     </CartProvider>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
-import './DashRec.css';
+
 
 export const Inventario = () => {
   const navigate = useNavigate();

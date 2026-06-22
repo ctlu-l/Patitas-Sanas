@@ -209,29 +209,45 @@ function PortalCliente() {
           </section>
         )}
 
-        <section className="dashboard-grid">
-          <div className="card">
-            <h3>Mis Mascotas</h3>
-            <p>Gestiona el historial y datos de tus peluditos.</p>
-            <Link to="/mis-mascotas"><button className="btn-secundario">Ver Mascotas</button></Link>
-          </div>
-
-          <div className="card">
-            <h3>Mis Citas</h3>
-            <p>Revisa tus próximas visitas al veterinario.</p>
-            <Link to="/mis-citas"><button className="btn-secundario">Ver Citas</button></Link>
-          </div>
-
-          <div className="card">
-            <h3>Mis Compras</h3>
-            <p>Revisa el historial de tus pedidos y compras.</p>
-            <Link to="/mis-compras"><button className="btn-secundario">Ver Compras</button></Link>
-          </div>
-
-          <div className="card">
-            <h3>Agendar Nueva Cita</h3>
-            <p>Reserva un espacio para revisión o vacuna.</p>
-            <Link to="/agendar-cita"><button className="btn-primario">+ Agendar</button></Link>
+        {/* === NUEVA SECCIÓN DE SUGERENCIAS DE CUIDADO === */}
+        <section className="pet-care-tips">
+          <h2>7 cuidados que debes tener con las mascotas y los niños 🐾👧👦</h2>
+          
+          <div className="tips-grid">
+            <div className="tip-card">
+              <span className="tip-icon">👀</span>
+              <p><strong>Supervísalos siempre.</strong> De forma permanente, no los dejes solos.</p>
+            </div>
+            
+            <div className="tip-card">
+              <span className="tip-icon">🤝</span>
+              <p><strong>Enséñales el respeto mutuo.</strong></p>
+            </div>
+            
+            <div className="tip-card">
+              <span className="tip-icon">🧼</span>
+              <p><strong>Higiene ante todo.</strong> Evita que los niños besen a las mascotas o ingieran alimentos después de tocarlas sin lavarse las manos.</p>
+            </div>
+            
+            <div className="tip-card">
+              <span className="tip-icon">✂️</span>
+              <p><strong>Cuidados necesarios.</strong> Bríndale a tu mascota los cuidados que requiere para mantenerse sana; así también proteges a los niños.</p>
+            </div>
+            
+            <div className="tip-card">
+              <span className="tip-icon">🐿️</span>
+              <p><strong>No tengas animales silvestres.</strong> Está prohibido y es un gran riesgo tanto para los niños como para las mascotas.</p>
+            </div>
+            
+            <div className="tip-card">
+              <span className="tip-icon">🚧</span>
+              <p><strong>Pon límites.</strong> Cada uno debe tener su espacio establecido para dormir, comer, etc.</p>
+            </div>
+            
+            <div className="tip-card">
+              <span className="tip-icon">❤️</span>
+              <p><strong>No son juguetes.</strong> Muéstrales a los niños que las mascotas sienten y merecen respeto.</p>
+            </div>
           </div>
         </section>
 

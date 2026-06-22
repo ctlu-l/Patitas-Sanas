@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
-import './DashRec.css'; 
+
 
 export const Admin = () => {
   const navigate = useNavigate();
@@ -266,12 +266,6 @@ export const Admin = () => {
             )}
           </div>
         );
-
-      case 'servicios':
-        return <div className="panel"><h2 style={{ color: 'var(--primary)' }}>Catálogo de Servicios y Precios</h2></div>;
-      
-      default:
-        return null;
     }
   };
 
@@ -284,7 +278,6 @@ export const Admin = () => {
           <li><a href="#" className={seccionActiva === 'dashboard' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setSeccionActiva('dashboard'); }}>📊 Dashboard</a></li>
           <li><a href="#" className={seccionActiva === 'personal' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setSeccionActiva('personal'); }}>👥 Personal</a></li>
           <li><a href="#" className={seccionActiva === 'pacientes' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setSeccionActiva('pacientes'); }}>🐕 Pacientes y Dueños</a></li>
-          <li><a href="#" className={seccionActiva === 'servicios' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setSeccionActiva('servicios'); }}>⚙️ Servicios y Precios</a></li>
         </ul>
       </aside>
 
