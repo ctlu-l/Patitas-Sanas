@@ -2,7 +2,6 @@ import React, { useContext } from 'react';
 import { CartContext } from './CartContext';
 import { useNavigate } from 'react-router-dom'; 
 import { jsPDF } from "jspdf";
-import { supabase } from '../supabase';
 import './Tienda.css';
 
 const Cart = () => {

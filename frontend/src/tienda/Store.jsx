@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { supabase } from '../supabase'; 
 import ProductCard from './ProductCard'; 
 import Cart from './Cart'; 
 import { Link } from 'react-router-dom';

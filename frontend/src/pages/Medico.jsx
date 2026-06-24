@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../supabase";
 import { jsPDF } from "jspdf";
 import "./Medico.css";
 

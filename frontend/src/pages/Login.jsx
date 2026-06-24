@@ -17,28 +17,40 @@ function Login() {
     e.preventDefault();
     const emailLimpio = email.trim();
 
-    // Cuentas Demo estáticas
-    if (emailLimpio === 'veterinario@demo.com' && password === 'vet123') {
-      localStorage.setItem('currentUser', JSON.stringify({ email: emailLimpio, rol: 'Veterinario' }));
-      navigate('/demo-veterinario');
+    // --- CUENTAS ESTÁTICAS DEL SISTEMA ---
+    
+    // 1. Administrador
+    if (emailLimpio === 'admin@patitassanas.com' && password === 'Admin1234') {
+      localStorage.setItem('currentUser', JSON.stringify({ email: emailLimpio, rol: 'Administrador' }));
+      navigate('/admin');
       return; 
     }
 
-    if (emailLimpio === 'recepcionista@demo.com' && password === 'rec123') {
+    // 2. Recepcionista
+    if (emailLimpio === 'marirep@gmail.com' && password === 'Spam18091809.') {
       localStorage.setItem('currentUser', JSON.stringify({ email: emailLimpio, rol: 'Recepcionista' }));
-      navigate('/demo-recepcionista');
+      // Redirige a /recepcion que está definida en tu App.jsx
+      navigate('/recepcion');
+      return; 
+    }
+
+    // 3. Veterinario
+    if (emailLimpio === 'veterinario@demo.com' && password === 'vet123') {
+      localStorage.setItem('currentUser', JSON.stringify({ email: emailLimpio, rol: 'Veterinario' }));
+      // Redirige a /demo-veterinario según tu App.jsx
+      navigate('/demo-veterinario');
       return; 
     }
 
     setCargando(true);
     
-    // Simulamos un pequeño tiempo de carga de red
+    // Simulamos un pequeño tiempo de carga para los clientes
     setTimeout(() => {
       const rutaDestino = location.state?.returnTo || '/portal-cliente';
       const usuariosDB = JSON.parse(localStorage.getItem('patitas_usuarios') || '[]');
 
       if (!isLogin) {
-        // --- REGISTRO SIMULADO ---
+        // --- REGISTRO SIMULADO PARA CLIENTES ---
         if (!nombreCompleto) {
           alert('Por favor ingresa tu nombre completo.');
           setCargando(false);
@@ -64,18 +76,12 @@ function Login() {
         navigate(location.state?.returnTo ? rutaDestino : '/agendar-cita');
 
       } else {
-        // --- INICIO DE SESIÓN SIMULADO ---
+        // --- INICIO DE SESIÓN SIMULADO PARA CLIENTES ---
         const usuarioEncontrado = usuariosDB.find(u => u.email === emailLimpio && u.password === password);
         
         if (usuarioEncontrado) {
           // Guardar sesión activa
           localStorage.setItem('currentUser', JSON.stringify(usuarioEncontrado));
-          
-          // Redirección según rol simulado (por si en el futuro agregas administradores manuales al localStorage)
-          if (usuarioEncontrado.rol === 'Administrador') return navigate('/admin');
-          if (usuarioEncontrado.rol === 'Veterinario') return navigate('/panel-vet');
-          if (usuarioEncontrado.rol === 'Recepcionista') return navigate('/recepcion');
-          
           navigate(rutaDestino);
         } else {
           alert('Credenciales incorrectas o el usuario no existe.');
