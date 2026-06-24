@@ -1,27 +1,39 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
+import { z } from "zod";
 
-// Inicializamos el servidor MCP
-const server = new McpServer({
-  name: "Mi Servidor de Cloudflare",
-  version: "1.0.0"
-});
+function createServer() {
+  const server = new McpServer({
+    name: "Mi Servidor de Cloudflare",
+    version: "1.0.0"
+  });
 
-// Agregamos una herramienta (Tool) de ejemplo para que la IA la pruebe
-server.tool(
-  "calcular_cuadrado",
-  "Calcula el cuadrado de un número",
-  async ({ numero }) => {
-    const resultado = numero * numero;
-    return {
-      content: [{ type: "text", text: `El cuadrado de ${numero} es ${resultado}` }]
-    };
-  }
-);
+  server.registerTool(
+    "calcular_cuadrado",
+    {
+      description: "Calcula el cuadrado de un número",
+      inputSchema: z.object({
+        numero: z.number().describe("El número a elevar al cuadrado")
+      })
+    },
+    async ({ numero }) => {
+      const resultado = numero * numero;
+      return {
+        content: [{ type: "text", text: `El cuadrado de ${numero} es ${resultado}` }]
+      };
+    }
+  );
 
-// Formato de exportación obligatorio para Cloudflare Workers
+  return server;
+}
+
 export default {
-  async fetch(request, env, ctx) {
-    // Aquí el SDK de MCP se encarga de procesar la petición de la IA
-    return new Response("Servidor MCP de Cloudflare Inicializado", { status: 200 });
+  async fetch(request) {
+    // Se crea una instancia nueva de server y transport por petición
+    // (requerido desde la SDK 1.26+ para evitar fuga de datos entre clientes)
+    const transport = new WebStandardStreamableHTTPServerTransport();
+    const server = createServer();
+    await server.connect(transport);
+    return transport.handleRequest(request);
   }
 };
